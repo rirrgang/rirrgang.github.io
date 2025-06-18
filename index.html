@@ -1,7 +1,292 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <h1>Hello World</h1>
-    <p>I'm hosted with GitHub Pages.</p>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meal Prep Wochenplan</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-gray-100 p-4">
+    <div id="root"></div>
+
+    <script type="module">
+      import React, { useState } from "https://cdn.skypack.dev/react";
+      import { createRoot } from "https://cdn.skypack.dev/react-dom/client";
+      import { motion, AnimatePresence } from "https://cdn.skypack.dev/framer-motion";
+
+      const categoryColors = {
+        Frühstück: "bg-yellow-100 text-yellow-800",
+        Mittagessen: "bg-green-100 text-green-800",
+        Abendbrot: "bg-red-100 text-red-800",
+        Snack: "bg-blue-100 text-blue-800",
+      };
+
+      const parseAmount = (amount) => {
+        const [value, ...unitParts] = amount.split(" ");
+        return { numeric: parseFloat(value.replace(",", ".")), unit: unitParts.join(" ") };
+      };
+
+      const scaleText = (text, scale) =>
+        text.replace(/(\d+,?\d*)\s?(g|ml|Stück|EL|TL)/g, (_, p1, p2) => {
+          const n = parseFloat(p1.replace(",", "."));
+          return `${Math.round(n * scale * 100) / 100} ${p2}`;
+        });
+
+      const recipes = [
+        {
+          id: 1,
+          title: "Breakfast Burrito",
+          category: "Frühstück",
+          image: "https://source.unsplash.com/featured/?burrito",
+          description: "Herzhaftes Frühstücks-Burrito mit Ei, Spinat und Käse.",
+          ingredients: [
+            { name: "Eier", amount: "2 Stück" },
+            { name: "Spinat", amount: "50 g" },
+            { name: "Olivenöl", amount: "1 TL" },
+            { name: "Tortilla (groß)", amount: "1 Stück" },
+            { name: "Geriebener Käse", amount: "15 g" },
+          ],
+          macros: { calories: 297, protein: "19", carbs: "20", fat: "15" },
+          steps: [
+            "Nimm 2 Stück Eier und verquirle sie mit 1 Prise Salz und Pfeffer.",
+            "Erhitze 1 TL Olivenöl in einer Pfanne und brate 50 g Spinat für 1–2 Min. an.",
+            "Gieße die verquirlten Eier hinzu und lasse sie unter Rühren 5 Min. stocken.",
+            "Lege 1 Stück große Tortilla flach und verteile die Eier-Spinat-Mischung auf einem Drittel der Fläche.",
+            "Streue 15 g geriebenen Käse darüber und rolle die Tortilla fest ein.",
+            "Verpacke das Burrito in Folie und friere es ein. Zum Aufwärmen entferne die Folie und erhitze es in der Mikrowelle: zuerst 1–2 Min. bei 50 % Leistung, dann 2 Min. bei voller Leistung.",
+          ],
+        },
+        {
+          id: 2,
+          title: "Blueberry Baked Oatmeal",
+          category: "Frühstück",
+          image: "https://source.unsplash.com/featured/?baked-oatmeal",
+          description: "Ofen-Haferflocken mit Heidelbeeren, gut vorzubereiten.",
+          ingredients: [
+            { name: "Haferflocken", amount: "100 g" },
+            { name: "Milch", amount: "150 ml" },
+            { name: "Ei", amount: "1 Stück" },
+            { name: "Heidelbeeren", amount: "75 g" },
+            { name: "Butter", amount: "10 g" },
+            { name: "Brauner Zucker", amount: "20 g" },
+          ],
+          macros: { calories: 184, protein: "5", carbs: "28", fat: "6" },
+          steps: ["Heize den Ofen auf 190 °C vor und fette eine Auflaufform ein.", "Mische 100 g Haferflocken, 150 ml Milch, 1 Stück Ei, 20 g braunen Zucker und 10 g Butter.", "Heb 75 g Heidelbeeren unter die Masse und gib alles in die Form.", "Backe das Ganze 40 Min. und lasse es 10 Min. abkühlen, bevor du es in Portionen schneidest."],
+        },
+        {
+          id: 3,
+          title: "Mocha Overnight Oats",
+          category: "Frühstück",
+          image: "https://source.unsplash.com/featured/?overnight-oats",
+          description: "Kaffee-Oats, die über Nacht ziehen – schnell und lecker.",
+          ingredients: [
+            { name: "Haferflocken", amount: "60 g" },
+            { name: "Kaffee", amount: "100 ml" },
+            { name: "Milch", amount: "100 ml" },
+            { name: "Ahornsirup", amount: "10 ml" },
+            { name: "Chiasamen", amount: "10 g" },
+          ],
+          macros: { calories: 379, protein: "13", carbs: "53", fat: "15" },
+          steps: ["Mische 60 g Haferflocken, 100 ml Kaffee, 100 ml Milch, 10 ml Ahornsirup und 10 g Chiasamen.", "Stelle die Mischung abgedeckt über Nacht in den Kühlschrank.", "Toppe vor dem Servieren nach Wunsch mit Nüssen oder Kakaonibs."],
+        },
+        {
+          id: 4,
+          title: "Brown Rice Bowl",
+          category: "Mittagessen",
+          image: "https://source.unsplash.com/featured/?rice-bowl",
+          description: "Herzhafte Bowl mit Naturreis, Bohnen, Gemüse und Avocado.",
+          ingredients: [
+            { name: "Brauner Reis", amount: "100 g" },
+            { name: "Schwarze Bohnen", amount: "80 g" },
+            { name: "Mais", amount: "50 g" },
+            { name: "Paprika", amount: "50 g" },
+            { name: "Avocado", amount: "1 Stück" },
+            { name: "Olivenöl", amount: "1 EL" },
+          ],
+          macros: { calories: 262, protein: "8", carbs: "38.1", fat: "10.6" },
+          steps: ["Koche 100 g braunen Reis nach Packungsanweisung.", "Mische 80 g schwarze Bohnen, 50 g Mais und 50 g gewürfelte Paprika.", "Rühre 1 EL Olivenöl und Limettensaft unter und lasse das Gemüse kurz marinieren.", "Serviere die Mischung auf dem Reis und garniere mit 1 Stück Avocado in Scheiben."],
+        },
+        {
+          id: 5,
+          title: "Tomato Basil Orzo",
+          category: "Mittagessen",
+          image: "https://source.unsplash.com/featured/?orzo",
+          description: "Ofengeröstetes Orzo-Gericht mit Tomate und Basilikum.",
+          ingredients: [
+            { name: "Orzo", amount: "100 g" },
+            { name: "Tomatensauce", amount: "150 ml" },
+            { name: "Zucchini", amount: "50 g" },
+            { name: "Zwiebel", amount: "50 g" },
+            { name: "Knoblauch", amount: "1 Zehe" },
+            { name: "Brühe", amount: "100 ml" },
+          ],
+          macros: { calories: 430, protein: "16.9", carbs: "52.8", fat: "18" },
+          steps: ["Heize den Ofen auf 200 °C vor.", "Brate 50 g Zwiebel und 1 Zehe Knoblauch in Öl an.", "Gib 100 g Orzo, 150 ml Tomatensauce und 100 ml Brühe dazu.", "Backe alles 10 Min., rühre 1 Handvoll Basilikum ein und backe weitere 5 Min."],
+        },
+        {
+          id: 6,
+          title: "Honey Lemon Salmon",
+          category: "Abendbrot",
+          image: "https://source.unsplash.com/featured/?salmon",
+          description: "Lachsfilet mit Honig-Zitronen-Marinade und Brokkolini.",
+          ingredients: [
+            { name: "Lachsfilet", amount: "150 g" },
+            { name: "Brokkolini", amount: "100 g" },
+            { name: "Honig", amount: "1 EL" },
+            { name: "Zitronensaft", amount: "10 ml" },
+          ],
+          macros: { calories: 454, protein: "30", carbs: "34", fat: "23" },
+          steps: ["Heize den Ofen auf 220 °C vor.", "Verteile 150 g Lachsfilet und 100 g Brokkolini auf einem Backblech.", "Mische 1 EL Honig und 10 ml Zitronensaft und träufle die Marinade darüber.", "Backe alles 12–15 Min. und serviere sofort."],
+        },
+        {
+          id: 7,
+          title: "Chickpea Curry Bowl",
+          category: "Abendbrot",
+          image: "https://source.unsplash.com/featured/?chickpea-curry",
+          description: "Würziges Curry mit Kichererbsen und Blumenkohl.",
+          ingredients: [
+            { name: "Kichererbsen", amount: "100 g" },
+            { name: "Blumenkohl", amount: "100 g" },
+            { name: "Currypulver", amount: "1 EL" },
+            { name: "Kokosmilch", amount: "100 ml" },
+          ],
+          macros: { calories: 337, protein: "13", carbs: "43", fat: "15" },
+          steps: ["Heize den Ofen auf 220 °C vor.", "Würze 100 g Blumenkohl und 100 g Kichererbsen mit 1 EL Currypulver.", "Röste beides 20 Min. im Ofen.", "Erhitze 100 ml Kokosmilch in einem Topf und serviere das Curry dazu."],
+        },
+      ];
+
+      const weekPlan = [
+        { day: "Montag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 2 } },
+        { day: "Dienstag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 3 } },
+        { day: "Mittwoch", meals: { breakfast: 3, lunch: 4, dinner: 6, snack: 2 } },
+        { day: "Donnerstag", meals: { breakfast: 1, lunch: 5, dinner: 7, snack: 3 } },
+        { day: "Freitag", meals: { breakfast: 2, lunch: 4, dinner: 6, snack: 3 } },
+      ];
+
+      function MealPrepCalendar() {
+        const [expanded, setExpanded] = useState(null);
+        const [scale, setScale] = useState(1);
+
+        const panelVariants = {
+          hidden: { height: 0, opacity: 0 },
+          visible: { height: "auto", opacity: 1 },
+        };
+
+        return React.createElement(
+          "div",
+          { className: "min-h-screen bg-gray-100 p-4" },
+          React.createElement("h1", { className: "text-2xl font-bold mb-4 text-center" }, "Meal Prep Wochenplan"),
+          React.createElement(
+            "div",
+            { className: "mb-6 px-4" },
+            React.createElement("label", { className: "font-medium" }, `Portionsfaktor: ${scale}`),
+            React.createElement("input", {
+              type: "range",
+              min: 1,
+              max: 7,
+              value: scale,
+              onChange: (e) => setScale(parseInt(e.target.value, 10)),
+              className: "w-full mt-2",
+            })
+          ),
+          React.createElement(
+            "div",
+            { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4" },
+            weekPlan.map(({ day, meals }) =>
+              React.createElement(
+                "div",
+                { key: day, className: "bg-white rounded-2xl shadow p-3" },
+                React.createElement("h2", { className: "text-lg font-semibold mb-2 text-center" }, day),
+                ["breakfast", "lunch", "dinner", "snack"].map((key) => {
+                  const labels = { breakfast: "Frühstück", lunch: "Mittagessen", dinner: "Abendbrot", snack: "Snack" };
+                  const recipe = recipes.find((r) => r.id === meals[key]);
+                  if (!recipe) return null;
+                  const id = `${day}-${key}`;
+                  return React.createElement(
+                    "div",
+                    { key, className: "mb-3 border-b pb-2" },
+                    React.createElement(
+                      "h3",
+                      {
+                        className: `inline-block px-2 py-1 rounded ${categoryColors[recipe.category]}`,
+                      },
+                      labels[key]
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex justify-between items-center mt-1" },
+                      React.createElement("span", { className: "font-medium" }, recipe.title),
+                      React.createElement(
+                        "button",
+                        {
+                          onClick: () => setExpanded(expanded === id ? null : id),
+                          className: "text-blue-600 focus:outline-none",
+                        },
+                        expanded === id ? "Schließen" : "Mehr"
+                      )
+                    ),
+                    React.createElement(
+                      AnimatePresence,
+                      null,
+                      expanded === id &&
+                        React.createElement(
+                          motion.div,
+                          {
+                            variants: panelVariants,
+                            initial: "hidden",
+                            animate: "visible",
+                            exit: "hidden",
+                            transition: { duration: 0.3 },
+                            className: "mt-2 overflow-hidden",
+                          },
+                          React.createElement("img", {
+                            src: recipe.image,
+                            alt: recipe.title,
+                            className: "w-full h-32 object-cover rounded mb-2",
+                          }),
+                          React.createElement("p", { className: "text-gray-600 text-sm mb-1" }, recipe.description),
+                          React.createElement(
+                            "div",
+                            { className: "bg-gray-50 p-2 rounded mb-2" },
+                            React.createElement("h4", { className: "font-medium" }, "Zutaten"),
+                            React.createElement(
+                              "ul",
+                              { className: "list-disc list-inside text-sm" },
+                              recipe.ingredients.map((ing, i) => {
+                                const { numeric, unit } = parseAmount(ing.amount);
+                                return React.createElement("li", { key: i }, `${numeric * scale} ${unit} ${ing.name}`);
+                              })
+                            )
+                          ),
+                          React.createElement(
+                            "div",
+                            { className: "bg-gray-50 p-2 rounded mb-2" },
+                            React.createElement("h4", { className: "font-medium" }, "Makronährstoffe"),
+                            React.createElement("ul", { className: "list-disc list-inside text-sm" }, React.createElement("li", null, `${recipe.macros.calories * scale} kcal`), React.createElement("li", null, `Eiweiß: ${parseFloat(recipe.macros.protein) * scale}g`), React.createElement("li", null, `Kohlenhydrate: ${parseFloat(recipe.macros.carbs) * scale}g`), React.createElement("li", null, `Fett: ${parseFloat(recipe.macros.fat) * scale}g`))
+                          ),
+                          React.createElement(
+                            "div",
+                            { className: "bg-gray-50 p-2 rounded" },
+                            React.createElement("h4", { className: "font-medium" }, "Zubereitungsschritte"),
+                            React.createElement(
+                              "ol",
+                              { className: "list-decimal list-inside text-sm space-y-1" },
+                              recipe.steps.map((step, i) => React.createElement("li", { key: i }, scaleText(step, scale)))
+                            )
+                          )
+                        )
+                    )
+                  );
+                })
+              )
+            )
+          )
+        );
+      }
+
+      const root = createRoot(document.getElementById("root"));
+      root.render(React.createElement(MealPrepCalendar));
+    </script>
   </body>
 </html>
