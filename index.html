@@ -3,34 +3,151 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Meal Prep Wochenplan</title>
-    <!-- TailwindCSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Meal Prep Calendar</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+      }
+      header {
+        background: #4caf50;
+        color: white;
+        text-align: center;
+        padding: 1rem 0;
+      }
+      .slider-container {
+        padding: 0 1rem;
+        margin-bottom: 1rem;
+      }
+      .slider-container label {
+        font-weight: bold;
+      }
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1rem;
+        padding: 0 1rem 1rem;
+      }
+      .day-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+      }
+      .day-card h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+        text-align: center;
+      }
+      .meal-item {
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.5rem;
+      }
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+      .toggle-text {
+        background: none;
+        border: none;
+        color: #1d4ed8;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .details-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      .details-content.expanded {
+        max-height: 1000px;
+      }
+      .details-content img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+      }
+      .details-content .section {
+        background: #f9f9f9;
+        padding: 0.5rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+      .label-Frühstück {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      .label-Mittagessen {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      .label-Abendbrot {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      .label-Snack {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      @media (max-width: 640px) {
+        .calendar {
+          grid-template-columns: 1fr;
+          padding: 0.5rem;
+        }
+      }
+      @media (min-width: 641px) and (max-width: 1024px) {
+        .calendar {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (min-width: 1025px) and (max-width: 1280px) {
+        .calendar {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+    </style>
   </head>
-  <body class="min-h-screen bg-gray-100 p-4">
-    <div id="root"></div>
+  <body>
+    <header><h1>Meal Prep Calendar</h1></header>
+    <main>
+      <div class="slider-container">
+        <label for="scaleRange">Portionsfaktor: <span id="scaleValue">1</span></label>
+        <input id="scaleRange" type="range" min="1" max="7" value="1" />
+      </div>
+      <div class="calendar" id="calendar"></div>
+    </main>
+    <script>
+      let scale = 1;
+      let expandedId = null;
 
-    <script type="module">
-      import React, { useState } from "https://cdn.skypack.dev/react";
-      import { createRoot } from "https://cdn.skypack.dev/react-dom/client";
-      import { motion, AnimatePresence } from "https://cdn.skypack.dev/framer-motion";
-
-      const categoryColors = {
-        Frühstück: "bg-yellow-100 text-yellow-800",
-        Mittagessen: "bg-green-100 text-green-800",
-        Abendbrot: "bg-red-100 text-red-800",
-        Snack: "bg-blue-100 text-blue-800",
+      const parseAmount = (amt) => {
+        const [value, ...unit] = amt.split(" ");
+        return { numeric: parseFloat(value.replace(",", ".")), unit: unit.join(" ") };
       };
-
-      const parseAmount = (amount) => {
-        const [value, ...unitParts] = amount.split(" ");
-        return { numeric: parseFloat(value.replace(",", ".")), unit: unitParts.join(" ") };
-      };
-
       const scaleText = (text, scale) =>
-        text.replace(/(\d+,?\d*)\s?(g|ml|Stück|EL|TL)/g, (_, p1, p2) => {
-          const n = parseFloat(p1.replace(",", "."));
-          return `${Math.round(n * scale * 100) / 100} ${p2}`;
+        text.replace(/(\d+,?\d*)\s?(g|ml|Stück|EL|TL)/g, (_, num, u) => {
+          const n = parseFloat(num.replace(",", "."));
+          return `${Math.round(n * scale * 100) / 100} ${u}`;
         });
 
       const recipes = [
@@ -38,255 +155,226 @@
           id: 1,
           title: "Breakfast Burrito",
           category: "Frühstück",
-          image: "https://source.unsplash.com/featured/?burrito",
-          description: "Herzhaftes Frühstücks-Burrito mit Ei, Spinat und Käse.",
+          image: "https://cdn.apartmenttherapy.info/image/upload/f_jpg,q_auto:eco,c_fill,g_auto,w_1500,ar_4:3/k%2Farchive%2Fa826c3d290d3124eb19552ff02befca11c657867",
+          description: "Ei, Käse und Spinat in einer Tortilla.",
           ingredients: [
             { name: "Eier", amount: "2 Stück" },
             { name: "Spinat", amount: "50 g" },
-            { name: "Olivenöl", amount: "1 TL" },
-            { name: "Tortilla (groß)", amount: "1 Stück" },
+            { name: "Tortilla", amount: "1 Stück" },
             { name: "Geriebener Käse", amount: "15 g" },
+            { name: "Olivenöl", amount: "1 TL" },
           ],
-          macros: { calories: 297, protein: "19", carbs: "20", fat: "15" },
-          steps: [
-            "Nimm 2 Stück Eier und verquirle sie mit 1 Prise Salz und Pfeffer.",
-            "Erhitze 1 TL Olivenöl in einer Pfanne und brate 50 g Spinat für 1–2 Min. an.",
-            "Gieße die verquirlten Eier hinzu und lasse sie unter Rühren 5 Min. stocken.",
-            "Lege 1 Stück große Tortilla flach und verteile die Eier-Spinat-Mischung auf einem Drittel der Fläche.",
-            "Streue 15 g geriebenen Käse darüber und rolle die Tortilla fest ein.",
-            "Verpacke das Burrito in Folie und friere es ein. Zum Aufwärmen entferne die Folie und erhitze es in der Mikrowelle: zuerst 1–2 Min. bei 50 % Leistung, dann 2 Min. bei voller Leistung.",
-          ],
+          macros: { Kalorien: 297, Protein: 19, Kohlenhydrate: 20, Fette: 15 },
+          steps: ["Eier verquirlen.", "Spinat anbraten.", "Eier stocken lassen.", "Tortilla belegen und rollen.", "Einpacken und einfrieren."],
         },
         {
           id: 2,
           title: "Blueberry Baked Oatmeal",
           category: "Frühstück",
-          image: "https://source.unsplash.com/featured/?baked-oatmeal",
-          description: "Ofen-Haferflocken mit Heidelbeeren, gut vorzubereiten.",
+          image: "https://www.eatingbirdfood.com/wp-content/uploads/2023/11/blueberry-baked-oatmeal-hero.jpg",
+          description: "Warmer Haferauflauf mit Blaubeeren.",
           ingredients: [
-            { name: "Haferflocken", amount: "100 g" },
-            { name: "Milch", amount: "150 ml" },
+            { name: "Haferflocken", amount: "50 g" },
+            { name: "Milch", amount: "120 ml" },
             { name: "Ei", amount: "1 Stück" },
-            { name: "Heidelbeeren", amount: "75 g" },
-            { name: "Butter", amount: "10 g" },
-            { name: "Brauner Zucker", amount: "20 g" },
+            { name: "Blaubeeren", amount: "50 g" },
+            { name: "Brauner Zucker", amount: "1 EL" },
+            { name: "Butter", amount: "5 g" },
           ],
-          macros: { calories: 184, protein: "5", carbs: "28", fat: "6" },
-          steps: ["Heize den Ofen auf 190 °C vor und fette eine Auflaufform ein.", "Mische 100 g Haferflocken, 150 ml Milch, 1 Stück Ei, 20 g braunen Zucker und 10 g Butter.", "Heb 75 g Heidelbeeren unter die Masse und gib alles in die Form.", "Backe das Ganze 40 Min. und lasse es 10 Min. abkühlen, bevor du es in Portionen schneidest."],
+          macros: { Kalorien: 184, Protein: 5, Kohlenhydrate: 28, Fette: 6 },
+          steps: ["Ofen 190°C vorbereiten.", "Zutaten mischen.", "40 Min. backen."],
         },
         {
           id: 3,
           title: "Mocha Overnight Oats",
           category: "Frühstück",
-          image: "https://source.unsplash.com/featured/?overnight-oats",
-          description: "Kaffee-Oats, die über Nacht ziehen – schnell und lecker.",
+          image: "https://wholefully.com/wp-content/uploads/2020/02/mocha-overnight-oats-jar.jpg",
+          description: "Kühle Haferflocken mit Kaffee, Kakao und Ahornsirup.",
           ingredients: [
-            { name: "Haferflocken", amount: "60 g" },
-            { name: "Kaffee", amount: "100 ml" },
+            { name: "Haferflocken", amount: "50 g" },
             { name: "Milch", amount: "100 ml" },
-            { name: "Ahornsirup", amount: "10 ml" },
-            { name: "Chiasamen", amount: "10 g" },
+            { name: "Kaffee", amount: "50 ml" },
+            { name: "Ahornsirup", amount: "1 EL" },
+            { name: "Chiasamen", amount: "1 TL" },
+            { name: "Kakaopulver", amount: "1 TL" },
           ],
-          macros: { calories: 379, protein: "13", carbs: "53", fat: "15" },
-          steps: ["Mische 60 g Haferflocken, 100 ml Kaffee, 100 ml Milch, 10 ml Ahornsirup und 10 g Chiasamen.", "Stelle die Mischung abgedeckt über Nacht in den Kühlschrank.", "Toppe vor dem Servieren nach Wunsch mit Nüssen oder Kakaonibs."],
+          macros: { Kalorien: 379, Protein: 13, Kohlenhydrate: 53, Fette: 15 },
+          steps: ["Zutaten ins Glas.", "Über Nacht kühlen.", "Mit Nüssen garnieren."],
         },
         {
           id: 4,
-          title: "Brown Rice Bowl",
+          title: "Brown Rice Power Bowl",
           category: "Mittagessen",
-          image: "https://source.unsplash.com/featured/?rice-bowl",
-          description: "Herzhafte Bowl mit Naturreis, Bohnen, Gemüse und Avocado.",
+          image: "https://runningonrealfood.com/wp-content/uploads/2018/10/6-ingredient-healthy-vegan-brown-rice-burrito-bowl-running-on-real-food-9.jpg",
+          description: "Vollkornreis mit Bohnen, Gemüse und Avocado.",
           ingredients: [
             { name: "Brauner Reis", amount: "100 g" },
-            { name: "Schwarze Bohnen", amount: "80 g" },
+            { name: "Schwarze Bohnen", amount: "50 g" },
             { name: "Mais", amount: "50 g" },
-            { name: "Paprika", amount: "50 g" },
-            { name: "Avocado", amount: "1 Stück" },
-            { name: "Olivenöl", amount: "1 EL" },
+            { name: "Cherrytomaten", amount: "50 g" },
+            { name: "Avocado", amount: "50 g" },
+            { name: "Limettensaft", amount: "1 EL" },
+            { name: "Olivenöl", amount: "1 TL" },
           ],
-          macros: { calories: 262, protein: "8", carbs: "38.1", fat: "10.6" },
-          steps: ["Koche 100 g braunen Reis nach Packungsanweisung.", "Mische 80 g schwarze Bohnen, 50 g Mais und 50 g gewürfelte Paprika.", "Rühre 1 EL Olivenöl und Limettensaft unter und lasse das Gemüse kurz marinieren.", "Serviere die Mischung auf dem Reis und garniere mit 1 Stück Avocado in Scheiben."],
+          macros: { Kalorien: 262, Protein: 8, Kohlenhydrate: 38, Fette: 10.6 },
+          steps: ["Öl erhitzen.", "Reis, Bohnen, Mais mischen.", "Tomaten, Avocado zugeben.", "Limettensaft untermischen."],
         },
         {
           id: 5,
-          title: "Tomato Basil Orzo",
+          title: "Tomato Basil Baked Orzo",
           category: "Mittagessen",
-          image: "https://source.unsplash.com/featured/?orzo",
-          description: "Ofengeröstetes Orzo-Gericht mit Tomate und Basilikum.",
+          image: "https://www.howsweeteats.com/wp-content/uploads/2022/05/baked-tomato-basil-orzo-10.jpg",
+          description: "Orzo mit Tomaten, Basilikum und Mozzarella.",
           ingredients: [
             { name: "Orzo", amount: "100 g" },
-            { name: "Tomatensauce", amount: "150 ml" },
-            { name: "Zucchini", amount: "50 g" },
-            { name: "Zwiebel", amount: "50 g" },
-            { name: "Knoblauch", amount: "1 Zehe" },
-            { name: "Brühe", amount: "100 ml" },
+            { name: "Tomaten", amount: "150 g" },
+            { name: "Spinat", amount: "50 g" },
+            { name: "Mozzarella", amount: "30 g" },
+            { name: "Olivenöl", amount: "1 EL" },
+            { name: "Brühe", amount: "200 ml" },
           ],
-          macros: { calories: 430, protein: "16.9", carbs: "52.8", fat: "18" },
-          steps: ["Heize den Ofen auf 200 °C vor.", "Brate 50 g Zwiebel und 1 Zehe Knoblauch in Öl an.", "Gib 100 g Orzo, 150 ml Tomatensauce und 100 ml Brühe dazu.", "Backe alles 10 Min., rühre 1 Handvoll Basilikum ein und backe weitere 5 Min."],
+          macros: { Kalorien: 430, Protein: 16.9, Kohlenhydrate: 52.8, Fette: 18 },
+          steps: ["Ofen 200°C.", "Tomaten anbraten.", "Orzo, Brühe köcheln.", "Spinat, Mozzarella zugeben.", "5 Min. backen."],
         },
         {
           id: 6,
           title: "Honey Lemon Salmon",
           category: "Abendbrot",
-          image: "https://source.unsplash.com/featured/?salmon",
-          description: "Lachsfilet mit Honig-Zitronen-Marinade und Brokkolini.",
+          image: "https://www.theseasonedmom.com/wp-content/uploads/2023/12/Sheet-Pan-Honey-Glazed-Salmon-with-Broccoli-6-736x1104.jpg",
+          description: "Lachs mit Honig-Zitronen-Glasur und Broccolini.",
           ingredients: [
             { name: "Lachsfilet", amount: "150 g" },
-            { name: "Brokkolini", amount: "100 g" },
+            { name: "Broccolini", amount: "100 g" },
             { name: "Honig", amount: "1 EL" },
-            { name: "Zitronensaft", amount: "10 ml" },
+            { name: "Zitronensaft", amount: "1 EL" },
           ],
-          macros: { calories: 454, protein: "30", carbs: "34", fat: "23" },
-          steps: ["Heize den Ofen auf 220 °C vor.", "Verteile 150 g Lachsfilet und 100 g Brokkolini auf einem Backblech.", "Mische 1 EL Honig und 10 ml Zitronensaft und träufle die Marinade darüber.", "Backe alles 12–15 Min. und serviere sofort."],
+          macros: { Kalorien: 454, Protein: 30, Kohlenhydrate: 34, Fette: 23 },
+          steps: ["Ofen 220°C.", "Marinade auftragen.", "12–15 Min. backen."],
         },
         {
           id: 7,
           title: "Chickpea Curry Bowl",
           category: "Abendbrot",
-          image: "https://source.unsplash.com/featured/?chickpea-curry",
-          description: "Würziges Curry mit Kichererbsen und Blumenkohl.",
+          image: "https://www.eatingwell.com/thmb/GQrds1Xbz6eG2RjkD1GT-Z33iHc=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/8412465-80f4cf93a06d406eaa67c613f4ac63b1.jpg",
+          description: "Kichererbsen und Blumenkohl in Currysauce.",
           ingredients: [
             { name: "Kichererbsen", amount: "100 g" },
             { name: "Blumenkohl", amount: "100 g" },
-            { name: "Currypulver", amount: "1 EL" },
+            { name: "Olivenöl", amount: "1 EL" },
+            { name: "Currypulver", amount: "1 TL" },
             { name: "Kokosmilch", amount: "100 ml" },
           ],
-          macros: { calories: 337, protein: "13", carbs: "43", fat: "15" },
-          steps: ["Heize den Ofen auf 220 °C vor.", "Würze 100 g Blumenkohl und 100 g Kichererbsen mit 1 EL Currypulver.", "Röste beides 20 Min. im Ofen.", "Erhitze 100 ml Kokosmilch in einem Topf und serviere das Curry dazu."],
+          macros: { Kalorien: 337, Protein: 13, Kohlenhydrate: 43, Fette: 15 },
+          steps: ["Ofen 220°C.", "Gemüse würzen, rösten.", "Kokosmilch erhitzen."],
         },
       ];
-
       const weekPlan = [
         { day: "Montag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 2 } },
         { day: "Dienstag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 3 } },
         { day: "Mittwoch", meals: { breakfast: 3, lunch: 4, dinner: 6, snack: 2 } },
         { day: "Donnerstag", meals: { breakfast: 1, lunch: 5, dinner: 7, snack: 3 } },
         { day: "Freitag", meals: { breakfast: 2, lunch: 4, dinner: 6, snack: 3 } },
+        { day: "Samstag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 2 } },
+        { day: "Sonntag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 3 } },
       ];
 
-      function MealPrepCalendar() {
-        const [expanded, setExpanded] = useState(null);
-        const [scale, setScale] = useState(1);
-
-        const panelVariants = {
-          hidden: { height: 0, opacity: 0 },
-          visible: { height: "auto", opacity: 1 },
-        };
-
-        return React.createElement(
-          "div",
-          { className: "min-h-screen bg-gray-100 p-4" },
-          React.createElement("h1", { className: "text-2xl font-bold mb-4 text-center" }, "Meal Prep Wochenplan"),
-          React.createElement(
-            "div",
-            { className: "mb-6 px-4" },
-            React.createElement("label", { className: "font-medium" }, `Portionsfaktor: ${scale}`),
-            React.createElement("input", {
-              type: "range",
-              min: 1,
-              max: 7,
-              value: scale,
-              onChange: (e) => setScale(parseInt(e.target.value, 10)),
-              className: "w-full mt-2",
-            })
-          ),
-          React.createElement(
-            "div",
-            { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4" },
-            weekPlan.map(({ day, meals }) =>
-              React.createElement(
-                "div",
-                { key: day, className: "bg-white rounded-2xl shadow p-3" },
-                React.createElement("h2", { className: "text-lg font-semibold mb-2 text-center" }, day),
-                ["breakfast", "lunch", "dinner", "snack"].map((key) => {
-                  const labels = { breakfast: "Frühstück", lunch: "Mittagessen", dinner: "Abendbrot", snack: "Snack" };
-                  const recipe = recipes.find((r) => r.id === meals[key]);
-                  if (!recipe) return null;
-                  const id = `${day}-${key}`;
-                  return React.createElement(
-                    "div",
-                    { key, className: "mb-3 border-b pb-2" },
-                    React.createElement(
-                      "h3",
-                      {
-                        className: `inline-block px-2 py-1 rounded ${categoryColors[recipe.category]}`,
-                      },
-                      labels[key]
-                    ),
-                    React.createElement(
-                      "div",
-                      { className: "flex justify-between items-center mt-1" },
-                      React.createElement("span", { className: "font-medium" }, recipe.title),
-                      React.createElement(
-                        "button",
-                        {
-                          onClick: () => setExpanded(expanded === id ? null : id),
-                          className: "text-blue-600 focus:outline-none",
-                        },
-                        expanded === id ? "Schließen" : "Mehr"
-                      )
-                    ),
-                    React.createElement(
-                      AnimatePresence,
-                      null,
-                      expanded === id &&
-                        React.createElement(
-                          motion.div,
-                          {
-                            variants: panelVariants,
-                            initial: "hidden",
-                            animate: "visible",
-                            exit: "hidden",
-                            transition: { duration: 0.3 },
-                            className: "mt-2 overflow-hidden",
-                          },
-                          React.createElement("img", {
-                            src: recipe.image,
-                            alt: recipe.title,
-                            className: "w-full h-32 object-cover rounded mb-2",
-                          }),
-                          React.createElement("p", { className: "text-gray-600 text-sm mb-1" }, recipe.description),
-                          React.createElement(
-                            "div",
-                            { className: "bg-gray-50 p-2 rounded mb-2" },
-                            React.createElement("h4", { className: "font-medium" }, "Zutaten"),
-                            React.createElement(
-                              "ul",
-                              { className: "list-disc list-inside text-sm" },
-                              recipe.ingredients.map((ing, i) => {
-                                const { numeric, unit } = parseAmount(ing.amount);
-                                return React.createElement("li", { key: i }, `${numeric * scale} ${unit} ${ing.name}`);
-                              })
-                            )
-                          ),
-                          React.createElement(
-                            "div",
-                            { className: "bg-gray-50 p-2 rounded mb-2" },
-                            React.createElement("h4", { className: "font-medium" }, "Makronährstoffe"),
-                            React.createElement("ul", { className: "list-disc list-inside text-sm" }, React.createElement("li", null, `${recipe.macros.calories * scale} kcal`), React.createElement("li", null, `Eiweiß: ${parseFloat(recipe.macros.protein) * scale}g`), React.createElement("li", null, `Kohlenhydrate: ${parseFloat(recipe.macros.carbs) * scale}g`), React.createElement("li", null, `Fett: ${parseFloat(recipe.macros.fat) * scale}g`))
-                          ),
-                          React.createElement(
-                            "div",
-                            { className: "bg-gray-50 p-2 rounded" },
-                            React.createElement("h4", { className: "font-medium" }, "Zubereitungsschritte"),
-                            React.createElement(
-                              "ol",
-                              { className: "list-decimal list-inside text-sm space-y-1" },
-                              recipe.steps.map((step, i) => React.createElement("li", { key: i }, scaleText(step, scale)))
-                            )
-                          )
-                        )
-                    )
-                  );
-                })
-              )
-            )
-          )
-        );
+      function renderCalendar() {
+        const cal = document.getElementById("calendar");
+        cal.innerHTML = "";
+        weekPlan.forEach(({ day, meals }) => {
+          const card = document.createElement("div");
+          card.className = "day-card";
+          const h2 = document.createElement("h2");
+          h2.textContent = day;
+          card.appendChild(h2);
+          Object.entries(meals).forEach(([key, id]) => {
+            const r = recipes.find((x) => x.id === id);
+            const labels = { breakfast: "Frühstück", lunch: "Mittagessen", dinner: "Abendbrot", snack: "Snack" };
+            if (!r) return;
+            const item = document.createElement("div");
+            item.className = "meal-item";
+            const lb = document.createElement("span");
+            lb.textContent = labels[key];
+            lb.className = `label-${r.category}`;
+            item.append(lb);
+            const flex = document.createElement("div");
+            flex.className = "flex-between";
+            const title = document.createElement("span");
+            title.textContent = r.title;
+            const btn = document.createElement("button");
+            btn.className = "toggle-text";
+            const uid = `${day}-${key}`;
+            btn.textContent = expandedId === uid ? "Schließen" : "Mehr";
+            btn.onclick = () => {
+              expandedId = expandedId === uid ? null : uid;
+              updateView();
+            };
+            flex.append(title, btn);
+            item.appendChild(flex);
+            const dc = document.createElement("div");
+            dc.className = "details-content";
+            if (expandedId === uid) dc.classList.add("expanded");
+            const img = document.createElement("img");
+            img.src = r.image;
+            dc.appendChild(img);
+            const desc = document.createElement("p");
+            desc.textContent = r.description;
+            dc.appendChild(desc);
+            const ingSec = document.createElement("div");
+            ingSec.className = "section";
+            ingSec.innerHTML = "<h4>Zutaten</h4>";
+            const ul = document.createElement("ul");
+            r.ingredients.forEach((i) => {
+              const { numeric, unit } = parseAmount(i.amount);
+              const li = document.createElement("li");
+              li.textContent = `${numeric * scale} ${unit} ${i.name}`;
+              ul.appendChild(li);
+            });
+            ingSec.appendChild(ul);
+            dc.appendChild(ingSec);
+            const macroSec = document.createElement("div");
+            macroSec.className = "section";
+            macroSec.innerHTML = "<h4>Makronährstoffe</h4>";
+            const mul = document.createElement("ul");
+            [
+              ["Kalorien", "kcal"],
+              ["Protein", "g"],
+              ["Kohlenhydrate", "g"],
+              ["Fette", "g"],
+            ].forEach(([k, u]) => {
+              const li = document.createElement("li");
+              li.textContent = `${k}: ${parseFloat(r.macros[k]) * scale}  ${u}`;
+              mul.appendChild(li);
+            });
+            macroSec.appendChild(mul);
+            dc.appendChild(macroSec);
+            const stepSec = document.createElement("div");
+            stepSec.className = "section";
+            stepSec.innerHTML = "<h4>Zubereitungsschritte</h4>";
+            const ol = document.createElement("ol");
+            r.steps.forEach((st) => {
+              const li = document.createElement("li");
+              li.textContent = scaleText(st, scale);
+              ol.appendChild(li);
+            });
+            stepSec.appendChild(ol);
+            dc.appendChild(stepSec);
+            item.appendChild(dc);
+            card.appendChild(item);
+          });
+          cal.appendChild(card);
+        });
       }
 
-      const root = createRoot(document.getElementById("root"));
-      root.render(React.createElement(MealPrepCalendar));
+      function updateView() {
+        renderCalendar();
+        document.getElementById("scaleValue").textContent = scale;
+      }
+      document.getElementById("scaleRange").addEventListener("input", (e) => {
+        scale = parseInt(e.target.value, 10);
+        updateView();
+      });
+      window.onload = updateView;
     </script>
   </body>
 </html>
