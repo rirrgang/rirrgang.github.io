@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Meal Prep Calendar</title>
+    <title>Lea’s Meal Prep Kalender</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -11,139 +12,39 @@
         padding: 0;
         background: #f5f5f5;
       }
-      header {
-        background: #4caf50;
-        color: white;
-        text-align: center;
-        padding: 1rem 0;
-      }
-      .slider-container {
-        padding: 0 1rem;
-        margin-bottom: 1rem;
-      }
-      .slider-container label {
-        font-weight: bold;
-      }
-      .calendar {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1rem;
-        padding: 0 1rem 1rem;
-      }
-      .day-card {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 1rem;
-      }
-      .day-card h2 {
-        margin: 0 0 0.5rem;
-        font-size: 1.1rem;
-        text-align: center;
-      }
-      .meal-item {
-        margin-bottom: 1rem;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 0.5rem;
-      }
-      .flex-between {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 0.5rem;
-      }
-      .toggle-text {
-        background: none;
-        border: none;
-        color: #1d4ed8;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .details-content {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-      }
-      .details-content.expanded {
-        max-height: 1000px;
-      }
-      .details-content img {
-        width: 100%;
-        height: 120px;
-        object-fit: cover;
-        border-radius: 6px;
-        margin-bottom: 0.5rem;
-      }
-      .details-content .section {
-        background: #f9f9f9;
-        padding: 0.5rem;
-        border-radius: 6px;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-      }
-      .label-Frühstück {
-        background: #fef3c7;
-        color: #92400e;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-      .label-Mittagessen {
-        background: #d1fae5;
-        color: #065f46;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-      .label-Abendbrot {
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-      .label-Snack {
-        background: #dbeafe;
-        color: #1e40af;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-      @media (max-width: 640px) {
-        .calendar {
-          grid-template-columns: 1fr;
-          padding: 0.5rem;
-        }
-      }
-      @media (min-width: 641px) and (max-width: 1024px) {
-        .calendar {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-      @media (min-width: 1025px) and (max-width: 1280px) {
-        .calendar {
-          grid-template-columns: repeat(4, 1fr);
-        }
-      }
     </style>
   </head>
   <body>
-    <header><h1>Meal Prep Calendar</h1></header>
-    <main>
-      <div class="slider-container">
-        <label for="scaleRange">Portionsfaktor: <span id="scaleValue">1</span></label>
-        <input id="scaleRange" type="range" min="1" max="7" value="1" />
+    <header class="bg-success text-white py-3 mb-4">
+      <div class="container text-center">
+        <h1 class="m-0">Lea’s Meal Prep Kalender</h1>
       </div>
-      <div class="calendar" id="calendar"></div>
+    </header>
+
+    <main class="container">
+      <div class="row mb-4">
+        <div class="col">
+          <label for="scaleRange" class="form-label fw-bold"> Portionsfaktor: <span id="scaleValue">1</span> </label>
+          <input id="scaleRange" type="range" class="form-range" min="1" max="7" value="1" />
+        </div>
+      </div>
+
+      <div id="calendar" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4"></div>
     </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoYw+Xpsm2n7Z0W1LRn5q8vbNsEY56v+0Uc4jm77phBOhMd" crossorigin="anonymous"></script>
     <script>
       let scale = 1;
       let expandedId = null;
 
       const parseAmount = (amt) => {
         const [value, ...unit] = amt.split(" ");
-        return { numeric: parseFloat(value.replace(",", ".")), unit: unit.join(" ") };
+        return {
+          numeric: parseFloat(value.replace(",", ".")),
+          unit: unit.join(" "),
+        };
       };
+
       const scaleText = (text, scale) =>
         text.replace(/(\d+,?\d*)\s?(g|ml|Stück|EL|TL)/g, (_, num, u) => {
           const n = parseFloat(num.replace(",", "."));
@@ -267,62 +168,138 @@
           macros: { Kalorien: 337, Protein: 13, Kohlenhydrate: 43, Fette: 15 },
           steps: ["Ofen 220°C.", "Gemüse würzen, rösten.", "Kokosmilch erhitzen."],
         },
+        {
+          id: 8,
+          title: "Apfelscheiben mit Erdnussbutter",
+          category: "Snack",
+          image: "https://res.cloudinary.com/dj3u6cnzh/image/upload/c_fill,w_1440/v1/hausmed/recipe/797bad9a599191cf72b16c3a63f2d554.jpg?_a=BAAAV6DQ",
+          description: "Frische Apfelscheiben mit einer Portion natürlicher Erdnussbutter.",
+          ingredients: [
+            { name: "Apfel", amount: "1 Stück" },
+            { name: "Erdnussbutter", amount: "30 g" },
+          ],
+          macros: { Kalorien: 285, Protein: 7.5, Kohlenhydrate: 23, Fette: 16.3 },
+          steps: ["Apfel in Scheiben schneiden.", "Erdnussbutter auf Apfel streichen.", "Genießen."],
+        },
+        {
+          id: 9,
+          title: "Griechischer Joghurt mit Beeren",
+          category: "Snack",
+          image: "https://www.daskochrezept.de/sites/daskochrezept.de/files/styles/700_530/public/stockfood/stockfood-12340139.jpg?h=3a61258b&itok=eWtTDSeb",
+          description: "Fettarmer griechischer Joghurt mit gemischten Beeren.",
+          ingredients: [
+            { name: "Griechischer Joghurt", amount: "150 g" },
+            { name: "Beeren (gemischt)", amount: "50 g" },
+          ],
+          macros: { Kalorien: 142, Protein: 4, Kohlenhydrate: 17, Fette: 6.5 },
+          steps: ["Joghurt in Schale geben.", "Beeren darüber verteilen.", "Optional mit Honig süßen."],
+        },
+        {
+          id: 10,
+          title: "Karottensticks mit Hummus",
+          category: "Snack",
+          image: "https://www.chip.de/ii/1/2/7/0/2/9/4/4/1/Hummus-Karotten-4fd95af9d61f4f0a.jpg",
+          description: "Knackige Karottensticks mit cremigem Hummus.",
+          ingredients: [
+            { name: "Karotten", amount: "122 g" },
+            { name: "Hummus", amount: "75 g" },
+          ],
+          macros: { Kalorien: 175, Protein: 7, Kohlenhydrate: 22, Fette: 7 },
+          steps: ["Karotten in Sticks schneiden.", "Hummus anrichten.", "Dippen und genießen."],
+        },
       ];
+
       const weekPlan = [
-        { day: "Montag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 2 } },
-        { day: "Dienstag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 3 } },
-        { day: "Mittwoch", meals: { breakfast: 3, lunch: 4, dinner: 6, snack: 2 } },
-        { day: "Donnerstag", meals: { breakfast: 1, lunch: 5, dinner: 7, snack: 3 } },
-        { day: "Freitag", meals: { breakfast: 2, lunch: 4, dinner: 6, snack: 3 } },
-        { day: "Samstag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 2 } },
-        { day: "Sonntag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 3 } },
+        { day: "Montag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 8 } },
+        { day: "Dienstag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 9 } },
+        { day: "Mittwoch", meals: { breakfast: 3, lunch: 4, dinner: 6, snack: 10 } },
+        { day: "Donnerstag", meals: { breakfast: 1, lunch: 5, dinner: 7, snack: 9 } },
+        { day: "Freitag", meals: { breakfast: 2, lunch: 4, dinner: 6, snack: 8 } },
+        { day: "Samstag", meals: { breakfast: 1, lunch: 4, dinner: 6, snack: 10 } },
+        { day: "Sonntag", meals: { breakfast: 2, lunch: 5, dinner: 7, snack: 9 } },
       ];
 
       function renderCalendar() {
         const cal = document.getElementById("calendar");
         cal.innerHTML = "";
         weekPlan.forEach(({ day, meals }) => {
+          const col = document.createElement("div");
+          col.className = "col";
+
           const card = document.createElement("div");
-          card.className = "day-card";
-          const h2 = document.createElement("h2");
-          h2.textContent = day;
-          card.appendChild(h2);
+          card.className = "card h-100";
+
+          const body = document.createElement("div");
+          body.className = "card-body";
+
+          const title = document.createElement("h5");
+          title.className = "card-title text-center mb-4";
+          title.textContent = day;
+          body.appendChild(title);
+
           Object.entries(meals).forEach(([key, id]) => {
             const r = recipes.find((x) => x.id === id);
-            const labels = { breakfast: "Frühstück", lunch: "Mittagessen", dinner: "Abendbrot", snack: "Snack" };
             if (!r) return;
-            const item = document.createElement("div");
-            item.className = "meal-item";
-            const lb = document.createElement("span");
-            lb.textContent = labels[key];
-            lb.className = `label-${r.category}`;
-            item.append(lb);
-            const flex = document.createElement("div");
-            flex.className = "flex-between";
-            const title = document.createElement("span");
-            title.textContent = r.title;
-            const btn = document.createElement("button");
-            btn.className = "toggle-text";
+
             const uid = `${day}-${key}`;
+            const box = document.createElement("div");
+            box.className = "mb-4 d-flex flex-column";
+
+            // Badge über dem Rezepttitel
+            const badge = document.createElement("span");
+            badge.className = "badge rounded-pill mb-2 align-self-start";
+            badge.textContent = r.category;
+            switch (r.category) {
+              case "Frühstück":
+                badge.classList.add("bg-warning", "text-dark");
+                break;
+              case "Mittagessen":
+                badge.classList.add("bg-success");
+                break;
+              case "Abendbrot":
+                badge.classList.add("bg-danger");
+                break;
+              case "Snack":
+                badge.classList.add("bg-primary");
+                break;
+            }
+            box.appendChild(badge);
+
+            // Rezepttitel
+            const nameSpan = document.createElement("h6");
+            nameSpan.className = "fw-bold mb-2";
+            nameSpan.textContent = r.title;
+            box.appendChild(nameSpan);
+
+            // Button unter dem Rezepttitel
+            const btn = document.createElement("button");
+            btn.className = "btn btn-secondary btn-sm mb-3 align-self-start";
             btn.textContent = expandedId === uid ? "Schließen" : "Mehr";
             btn.onclick = () => {
               expandedId = expandedId === uid ? null : uid;
               updateView();
             };
-            flex.append(title, btn);
-            item.appendChild(flex);
-            const dc = document.createElement("div");
-            dc.className = "details-content";
-            if (expandedId === uid) dc.classList.add("expanded");
+            box.appendChild(btn);
+
+            // Collapse-Container
+            const details = document.createElement("div");
+            details.className = "collapse" + (expandedId === uid ? " show" : "");
+
+            // Bild
             const img = document.createElement("img");
             img.src = r.image;
-            dc.appendChild(img);
+            img.className = "card-img-top mb-2 rounded";
+            details.appendChild(img);
+
+            // Beschreibung
             const desc = document.createElement("p");
             desc.textContent = r.description;
-            dc.appendChild(desc);
-            const ingSec = document.createElement("div");
-            ingSec.className = "section";
-            ingSec.innerHTML = "<h4>Zutaten</h4>";
+            details.appendChild(desc);
+
+            // Zutaten
+            const ing = document.createElement("div");
+            ing.className = "bg-light border rounded p-2 mb-2";
+            ing.innerHTML = "<h6>Zutaten</h6>";
             const ul = document.createElement("ul");
             r.ingredients.forEach((i) => {
               const { numeric, unit } = parseAmount(i.amount);
@@ -330,12 +307,14 @@
               li.textContent = `${numeric * scale} ${unit} ${i.name}`;
               ul.appendChild(li);
             });
-            ingSec.appendChild(ul);
-            dc.appendChild(ingSec);
-            const macroSec = document.createElement("div");
-            macroSec.className = "section";
-            macroSec.innerHTML = "<h4>Makronährstoffe</h4>";
-            const mul = document.createElement("ul");
+            ing.appendChild(ul);
+            details.appendChild(ing);
+
+            // Makros
+            const macros = document.createElement("div");
+            macros.className = "bg-light border rounded p-2 mb-2";
+            macros.innerHTML = "<h6>Makronährstoffe</h6>";
+            const um = document.createElement("ul");
             [
               ["Kalorien", "kcal"],
               ["Protein", "g"],
@@ -343,26 +322,32 @@
               ["Fette", "g"],
             ].forEach(([k, u]) => {
               const li = document.createElement("li");
-              li.textContent = `${k}: ${parseFloat(r.macros[k]) * scale}  ${u}`;
-              mul.appendChild(li);
+              li.textContent = `${k}: ${parseFloat(r.macros[k]) * scale} ${u}`;
+              um.appendChild(li);
             });
-            macroSec.appendChild(mul);
-            dc.appendChild(macroSec);
-            const stepSec = document.createElement("div");
-            stepSec.className = "section";
-            stepSec.innerHTML = "<h4>Zubereitungsschritte</h4>";
+            macros.appendChild(um);
+            details.appendChild(macros);
+
+            // Schritte
+            const steps = document.createElement("div");
+            steps.className = "bg-light border rounded p-2";
+            steps.innerHTML = "<h6>Zubereitungsschritte</h6>";
             const ol = document.createElement("ol");
             r.steps.forEach((st) => {
               const li = document.createElement("li");
               li.textContent = scaleText(st, scale);
               ol.appendChild(li);
             });
-            stepSec.appendChild(ol);
-            dc.appendChild(stepSec);
-            item.appendChild(dc);
-            card.appendChild(item);
+            steps.appendChild(ol);
+            details.appendChild(steps);
+
+            box.appendChild(details);
+            body.appendChild(box);
           });
-          cal.appendChild(card);
+
+          card.appendChild(body);
+          col.appendChild(card);
+          cal.appendChild(col);
         });
       }
 
@@ -370,10 +355,12 @@
         renderCalendar();
         document.getElementById("scaleValue").textContent = scale;
       }
+
       document.getElementById("scaleRange").addEventListener("input", (e) => {
         scale = parseInt(e.target.value, 10);
         updateView();
       });
+
       window.onload = updateView;
     </script>
   </body>
